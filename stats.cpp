@@ -66,16 +66,49 @@ stats::stats(PNG & im){
 }
 
 long stats::rectArea(pair<int,int> ul, pair<int,int> lr){
-
+  // given a rectangle, return the number of pixels in the rectangle
+  /* @param ul is (x,y) of the upper left corner of the rectangle
+  * @param lr is (x,y) of the lower right corner of the rectangle */
 /* your code here */
+ int xval = lr.first - ul.first + 1;
+ int yval = lr.second - lr.second + 1;
+ int area = xval * yval;
 
+ return area;
 }
 
 HSLAPixel stats::getAvg(pair<int,int> ul, pair<int,int> lr){
-
+  /* Each color component of the pixel is the average value of that
+	* component over the rectangle.
+	* @param ul is (x,y) of the upper left corner of the rectangle
+	* @param lr is (x,y) of the lower right corner of the rectangle */
+    // The average hue value can be computed from the average X and
+    // Y values using the arctan function. You should research the
+    // details of this. Finally, please set the average alpha channel to
+    // 1.0.
 /* your code here */
-}
+  int avgH  = 0;
+  double avgS = 0;
+  double avgL = 0;
+  long tPix= rectArea(ul,lr);
 
+  if (ul.first == 0 && ul.second == 0){
+    avgH = sumHueX[lr.first][lr.second]/tPix;
+  } else if (ul.first == 0){
+    avgH = (sumHueX[lr.first][lr.second] - sumHueX[lr.first][ul.second-1])/tPix;
+    avgL = (sumLum[lr.first][lr.second] - sumLum[lr.first][ul.second-1])/tPix;
+    avgS = (SumSat[lr.first][lr.second] - sumLum[lr.first][ul.second-1])/tPix;
+  } else if (ul.second == 0){
+    avgH = (sumHueX[lr.first][lr.second] - sumHueX[ul.first-1][lr.second])/tPix;
+    avgL = (sumLum[lr.first][lr.second] - sumLum[ul.first-1][lr.second])/tPix;
+    avgS = (SumSat[lr.fist][lr.second] - sumLum[ul.first-1][lr.second])/tPix;
+  }
+  avgH = (sumHueX[lr.first][lr.second] - sumHueX[lr.first][ul.second-1] - sumHueX[ul.first-1][lr.second] + sumHueX[ul.first-1][ul.second-1])/ tPix;
+  avgL = (sumLum[lr.first][lr.second] - sumLum[lr.first][ul.second-1] - sumLum[ul.first-1][lr.second] + sumLum[ul.first-1][ul.second-1])/tPix;
+  avgS = (SumSat[lr.fist][lr.second] - sumLum[lr.first][ul.second-1] - sumLum[ul.first-1][lr.second] + sumLum[ul.first-1][ul.second-1])/tPix;
+
+  return new HSLAPixel (avgH ,avgS, double avgL, 1.0);
+}
 vector<int> stats::buildHist(pair<int,int> ul, pair<int,int> lr){
 
 /* your code here */

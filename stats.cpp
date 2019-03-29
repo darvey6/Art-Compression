@@ -24,12 +24,12 @@ stats::stats(PNG & im){
   int totalSat = 0;
   int totalLum = 0;
 
-  for(int j = 0; j<im.height(); j++){
+  for(unsigned int j = 0; j<(unsigned int)im.height(); j++){
     totalX = 0;
     totalY = 0;
     totalSat = 0;
     totalLum = 0;
-    for(int i = 0; i<im.width(); i++){
+    for(unsigned int i = 0; i< (unsigned int)im.width(); i++){
       HSLAPixel *pix1 = im.getPixel(i,j);
 
       sumHueX[j][i] = pix1->s * cos(pix1->h);
@@ -97,27 +97,27 @@ HSLAPixel stats::getAvg(pair<int,int> ul, pair<int,int> lr){
   } else if (ul.first == 0){
     avgH = (sumHueX[lr.first][lr.second] - sumHueX[lr.first][ul.second-1])/tPix;
     avgL = (sumLum[lr.first][lr.second] - sumLum[lr.first][ul.second-1])/tPix;
-    avgS = (SumSat[lr.first][lr.second] - sumLum[lr.first][ul.second-1])/tPix;
+    avgS = (sumSat[lr.first][lr.second] - sumLum[lr.first][ul.second-1])/tPix;
   } else if (ul.second == 0){
     avgH = (sumHueX[lr.first][lr.second] - sumHueX[ul.first-1][lr.second])/tPix;
     avgL = (sumLum[lr.first][lr.second] - sumLum[ul.first-1][lr.second])/tPix;
-    avgS = (SumSat[lr.fist][lr.second] - sumLum[ul.first-1][lr.second])/tPix;
+    avgS = (sumSat[lr.first][lr.second] - sumLum[ul.first-1][lr.second])/tPix;
   }
   avgH = (sumHueX[lr.first][lr.second] - sumHueX[lr.first][ul.second-1] - sumHueX[ul.first-1][lr.second] + sumHueX[ul.first-1][ul.second-1])/ tPix;
   avgL = (sumLum[lr.first][lr.second] - sumLum[lr.first][ul.second-1] - sumLum[ul.first-1][lr.second] + sumLum[ul.first-1][ul.second-1])/tPix;
-  avgS = (SumSat[lr.fist][lr.second] - sumLum[lr.first][ul.second-1] - sumLum[ul.first-1][lr.second] + sumLum[ul.first-1][ul.second-1])/tPix;
+  avgS = (sumSat[lr.first][lr.second] - sumLum[lr.first][ul.second-1] - sumLum[ul.first-1][lr.second] + sumLum[ul.first-1][ul.second-1])/tPix;
 
-  return new HSLAPixel (avgH ,avgS, double avgL, 1.0);
+  return (HSLAPixel(avgH ,avgS, avgL, 1.0));
 }
 vector<int> stats::buildHist(pair<int,int> ul, pair<int,int> lr){
 
 /* your code here */
-  vector<int> vectorhist = new vector<int>(36);
+  vector<int> vectorhist(36);
   for(int k = 0; k<36; k++){
-    if (ul.first = 0){
+    if (ul.first == 0){
       vectorhist[k] = hist[lr.first][lr.second][k] - hist[lr.first][ul.second-1][k];
     }
-    if (ul.second = 0){
+    if (ul.second == 0){
       vectorhist[k] = hist[lr.first][lr.second][k] - hist[ul.first-1][lr.second][k];
     }
     vectorhist[k] = hist[lr.first][lr.second][k] - hist[lr.first][ul.second-1][k] - hist[ul.first-1][lr.second][k] + hist[ul.first-1][ul.second-1][k];
@@ -146,7 +146,16 @@ double stats::entropy(vector<int> & distn,int area){
 
 double stats::entropy(pair<int,int> ul, pair<int,int> lr){
   vector<int> newhist = buildHist(ul,lr);
-  entropy(newhist, rectArea(ul,lr));
+/* your code here */
+double entropy = 0.;
+
 /* your code here */
 
+for (int i = 0; i < 36; i++) {
+    if (newhist[i] > 0 )
+        entropy += ((double) newhist[i]/(double) rectArea(ul,lr))
+                                * log2((double) newhist[i]/(double) rectArea(ul,lr));
+}
+
+return  -1 * entropy;
 }

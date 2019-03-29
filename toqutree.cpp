@@ -31,24 +31,38 @@ toqutree & toqutree::operator=(const toqutree & rhs){
 	return *this;
 }
 
-toqutree::toqutree(PNG & imIn, int k){
-
-/* This constructor grabs the 2^k x 2^k sub-image centered */
-/* in imIn and uses it to build a quadtree. It may assume  */
-/* that imIn is large enough to contain an image of that size. */
-int start = (2^(k) - 2^(k-1)) / 2
-for (int i = start; i< start + 2^(k); i++){
-  for (int j = start; j <start +  2^k; j++) {
-    HSLAPixel pixel = imIn.getPixel(j,i);
-    pixel
-  }
-}
-/* your code here */
-
-}
+// toqutree::toqutree(PNG & imIn, int k){
+//
+// /* This constructor grabs the 2^k x 2^k sub-image centered */
+// /* in imIn and uses it to build a quadtree. It may assume  */
+// /* that imIn is large enough to contain an image of that size. */
+//
+// double temp_e = 0;
+// pair<int, int> temp_ul (0,0);
+//
+// int start = (2^(k) - 2^(k-1)) / 2;
+// for (int i = start; i< (start + 2^(k)); i++){
+//   for (int j = start; j <(start +  2^k); j++) {
+// 		pair<int,int> topleft(j,i);
+// 		part<int,int> bottomright (j+2^k,i+2^k);
+//
+//
+// 		double avg_e = entropy(topleft, bottomright);
+//
+// 		if (temp_e>avg_e){
+// 			temp_e =  avg_e;
+// 			temp_ul = topleft;
+// 		}
+//
+//   }
+// }
+// /* your code here */
+//
+// }
 
 int toqutree::size() {
 /* your code here */
+	return 0;
 }
 
 
@@ -77,11 +91,11 @@ PNG toqutree::render(){
 }
 
 /* oops, i left the implementation of this one in the file! */
-void toqutree::prune(double tol){
-
-	prune(root,tol);
-
-}
+// void toqutree::prune(double tol){
+//
+// 	prune(root,tol);
+//
+// }
 
 /* called by destructor and assignment operator*/
 void toqutree::clear(Node * & curr){

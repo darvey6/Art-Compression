@@ -19,6 +19,15 @@ stats::stats(PNG & im){
   sumSat =  vector<vector<double>> (0, vector<double>(0));
   sumLum  = vector<vector<double>> (0, vector<double>(0));
 
+  // int imW =im.width();
+  // int imH = im.height();
+  //
+  // hist = vector<vector<vector<int>>> (imW, vector<vector<int>>(imH, vector<int>(36)));
+  // sumHueX.resize(imW, vector<double>(imH));
+  // sumHueY.resize(imW, vector<double>(imH));
+  // sumSat.resize(imW, vector<double>(imH));
+  // sumLum.resize(imW, vector<double>(imH));
+
   int totalX = 0;
   int totalY = 0;
   int totalSat = 0;

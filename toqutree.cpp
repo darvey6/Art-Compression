@@ -460,5 +460,16 @@ void toqutree::clear(Node * & curr){
 /* done */
 /* called by assignment operator and copy constructor */
 toqutree::Node * toqutree::copy(const Node * other) {
+	if(other == NULL){
+		return NULL;
+	}
+/* your code here */
+ Node newNode = Node(other.center, other.dimension, other.avg);
 
+newNode->NE = copy(other->NE);
+newNode->NW = copy(other->NW);
+newNode->SE = copy(other->SW);
+newNode->SE = copy(other->SE);
+
+return newNode;
 }

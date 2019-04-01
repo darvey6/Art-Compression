@@ -2,150 +2,265 @@
 #include "stats.h"
 
 stats::stats(PNG & im){
-  // initialize all private vectors so that, for each color channel,
-  // (x,y) is the cumulative sum of the the color values from (0,0)
-  // to (x,y), and the hist structure is as defined above.
-    // Note that the hue (h) value of each pixel is represented by
-    // its cartesian coordinates: X = s*cos(h) and Y = s*sin(h).
-    // This is done to simplify distance computation. We calculate
-    // the cumulative sums for X and Y separately, and then combine
-    // them when we are doing color difference computation.
+	int x = im.width();
+	int y = im.height();
+	sumHueX.resize(x, vector<double>(y));
+	sumHueY.resize(x, vector<double>(y));
+	sumSat.resize(x, vector<double>(y));
+	sumLum.resize(x, vector<double>(y));
+	hist.resize(x, vector<vector<int>>(y, vector<int>(36)));
 
-/* your code here */
+	for (int x = 0; x < im.width(); x++) {
+		for (int y = 0; y < im.height(); y++) {
+			int bucket = im.getPixel(x, y)->h / 10;
+			if (x == 0 && y == 0) {
+				sumHueX[x][y] = cos(im.getPixel(x, y)->h*PI / 180);
+				sumHueY[x][y] = sin(im.getPixel(x, y)->h*PI / 180);
+				sumSat[x][y] = im.getPixel(x, y)->s;
+				sumLum[x][y] = im.getPixel(x, y)->l;
+				hist[x][y][bucket] = 1;
+			}
+			else if (x == 0) {
+				sumHueX[x][y] = cos(im.getPixel(x, y)->h*PI / 180) + sumHueX[x][y - 1];
+				sumHueY[x][y] = sin(im.getPixel(x, y)->h*PI / 180) + sumHueY[x][y - 1];
+				sumSat[x][y] = im.getPixel(x, y)->s + sumSat[x][y - 1];
+				sumLum[x][y] = im.getPixel(x, y)->l + sumLum[x][y - 1];
+				for (int h = 0; h < 36; h++) {
+					hist[x][y][h] = hist[x][y - 1][h];
+					if (h == bucket) {
+						hist[x][y][h]++;
+					}
+				}
+			}
+			else if (y == 0) {
+				sumHueX[x][y] = cos(im.getPixel(x, y)->h*PI / 180) + sumHueX[x - 1][y];
+				sumHueY[x][y] = sin(im.getPixel(x, y)->h*PI / 180) + sumHueY[x - 1][y];
+				sumSat[x][y] = im.getPixel(x, y)->s + sumSat[x - 1][y];
+				sumLum[x][y] = im.getPixel(x, y)->l + sumLum[x - 1][y];
+				for (int h = 0; h < 36; h++) {
+					hist[x][y][h] = hist[x - 1][y][h];
+					if (h == bucket) {
+						hist[x][y][h]++;
+					}
+				}
+			}
+			else {
+				sumHueX[x][y] = cos(im.getPixel(x, y)->h*PI / 180) + sumHueX[x - 1][y] + sumHueX[x][y - 1] - sumHueX[x - 1][y - 1];
+				sumHueY[x][y] = sin(im.getPixel(x, y)->h*PI / 180) + sumHueY[x - 1][y] + sumHueY[x][y - 1] - sumHueY[x - 1][y - 1];
+				sumSat[x][y] = im.getPixel(x, y)->s + sumSat[x - 1][y] + sumSat[x][y - 1] - sumSat[x - 1][y - 1];
+				sumLum[x][y] = im.getPixel(x, y)->l + sumLum[x - 1][y] + sumLum[x][y - 1] - sumLum[x - 1][y - 1];
+				for (int h = 0; h < 36; h++) {
+					hist[x][y][h] = hist[x - 1][y][h] + hist[x][y - 1][h] - hist[x - 1][y - 1][h];
+					if (h == bucket) {
+						hist[x][y][h]++;
+					}
+				}
+			}
 
-  // hist = vector<vector<vector<int>>> (0, vector<vector<int>>(0, vector<int>(36, 0)));
-  // sumHueX  = vector<vector<double>> (0, vector<double>(0));
-  // sumHueY = vector<vector<double>> (0, vector<double>(0));
-  // sumSat =  vector<vector<double>> (0, vector<double>(0));
-  // sumLum  = vector<vector<double>> (0, vector<double>(0));
 
-  int imW =im.width();
-  int imH = im.height();
+		}
+	}
+	
+}
 
-  hist = vector<vector<vector<int>>> (imW, vector<vector<int>>(imH, vector<int>(36)));
-  sumHueX.resize(imW, vector<double>(imH));
-  sumHueY.resize(imW, vector<double>(imH));
-  sumSat.resize(imW, vector<double>(imH));
-  sumLum.resize(imW, vector<double>(imH));
+void stats::setupSumHuex(PNG & im) {
+	for (int x = 0; x < im.width(); x++) {
+		for (int y = 0; y < im.height(); y++) {int bucket = im.getPixel(x, y)->h / 10;
+			if (x == 0 && y == 0) {
+				sumHueX[x][y] = cos(im.getPixel(x, y)->h*PI/180);
+				
+			}
+			else if (x == 0) {
+				sumHueX[x][y] = cos(im.getPixel(x, y)->h*PI / 180) + sumHueX[x][ y - 1];
+				
+			}
+			else if (y == 0) {
+				sumHueX[x][y] = cos(im.getPixel(x, y)->h*PI / 180) + sumHueX[x - 1][ y];
+			}
+			else {
+				sumHueX[x][y] = cos(im.getPixel(x, y)->h*PI / 180) + sumHueX[x - 1][ y] + sumHueX[x][ y - 1] - sumHueX[x - 1] [y - 1];
+			}
+		}
+	}
+}
 
-  int totalX = 0;
-  int totalY = 0;
-  int totalSat = 0;
-  int totalLum = 0;
+void stats::setupSumHuey(PNG & im) {
+	for (int x = 0; x < im.width(); x++) {
+		for (int y = 0; y < im.height(); y++) {
+			if (x == 0 && y == 0) {
+				sumHueY[x][y] = sin(im.getPixel(x, y)->h*PI / 180);
+			}
+			else if (x == 0) {
+				sumHueY[x][y] = sin(im.getPixel(x, y)->h*PI / 180) + sumHueY[x][ y - 1];
+			}
+			else if (y == 0) {
+				sumHueY[x][y] = sin(im.getPixel(x, y)->h*PI / 180) + sumHueY[x - 1][ y];
+			}
+			else {
+				sumHueY[x][y] = sin(im.getPixel(x, y)->h*PI / 180) + sumHueY[x - 1][ y] + sumHueY[x][ y - 1] - sumHueY[x - 1][ y - 1];
+			}
+		}
+	}
+}
 
-  for(unsigned int j = 0; j<(unsigned int)im.height(); j++){
-    totalX = 0;
-    totalY = 0;
-    totalSat = 0;
-    totalLum = 0;
-    for(unsigned int i = 0; i< (unsigned int)im.width(); i++){
-      HSLAPixel *pix1 = im.getPixel(i,j);
+void stats::setupSumSat(PNG & im) {
+	for (int x = 0; x < im.width(); x++) {
+		for (int y = 0; y < im.height(); y++) {
+			if (x == 0 && y == 0) {
+				sumSat[x][y] = im.getPixel(x, y)->s;
+			}
+			else if (x == 0) {
+				sumSat[x][y] = im.getPixel(x, y)->s + sumSat[x][ y - 1];
+			}
+			else if (y == 0) {
+				sumSat[x][y] = im.getPixel(x, y)->s + sumSat[x - 1][ y];
+			}
+			else {
+				sumSat[x][y] = im.getPixel(x, y)->s + sumSat[x - 1][ y] + sumSat[x][ y - 1] - sumSat[x - 1][ y - 1];
+			}
+		}
+	}
+}
 
-      sumHueX[j][i] = pix1->s * cos(pix1->h);
-      sumHueY[j][i] = pix1->s * sin(pix1->h);
-      sumSat[j][i] = pix1->s;
-      sumLum[j][i] = pix1->l;
+void stats::setupSumLum(PNG & im) {
+	for (int x = 0; x < im.width(); x++) {
+		for (int y = 0; y < im.height(); y++) {
+			if (x == 0 && y == 0) {
+				sumLum[x][y] = im.getPixel(x, y)->l;
+			}
+			else if (x == 0) {
+				sumLum[x][y] = im.getPixel(x, y)->l + sumLum[x][ y - 1];
+			}
+			else if (y == 0) {
+				sumLum[x][y] = im.getPixel(x, y)->l+ sumLum[x - 1][ y];
+			}
+			else {
+				sumLum[x][y] = im.getPixel(x, y)->l + sumLum[x - 1][ y] + sumLum[x][ y - 1] - sumLum[x - 1][ y - 1];
+			}
+		}
+	}
+}
 
-      totalX = totalX + sumHueX[j][i];
-      totalY = totalY + sumHueY[j][i];
-      totalSat = totalSat  + sumSat[j][i];
-      totalLum = totalLum + sumLum[j][i];
+void stats::setupHist(PNG & im) {
+	for (int x = 0; x < im.width(); x++) {
+		for (int y = 0; y < im.height(); y++) {
+			int bucket = im.getPixel(x, y)->h / 10;
+			putintobuckets(im, x, y, bucket);
+		}
+	}
+}
 
-      if (j > 0){
-        sumHueX[j][i] = totalX + sumHueX[j-1][i];
-        sumHueY[j][i] = totalY + sumHueY[j-1][i];
-        sumSat[j][i] = totalSat + sumSat[j-1][i];
-        sumLum[j][i] = totalLum + sumLum[j-1][i];
-      }
-      for(int k = 0; k < 36; k++){
-        if (i == 0 && j == 0){
-          break;
-        }
-        if (i == 0){
-          hist[i][j][k] = hist[i-1][j][k];
-        }
-        if (j == 0){
-          hist[i][j][k] = hist[i][j-1][k];
-        }
-        hist[i][j][k] = hist[i][j-1][k] + hist[i-1][j][k] - hist[i-1][j-1][k];
-      }
-        hist[i][j][pix1->h/10]++;
-    }
-  }
+void stats::putintobuckets(PNG &im, int x, int y, int bucket) {
+	for (int i = 0; i < im.width(); i++) {
+		for (int j = 0; j < im.height(); j++) {
+			if (j >= y && i>=x ) {
+				hist[i][j][bucket]++;
+				//cout << "row: " << i << " column " << j << " histogram bucket "<<bucket<< " incremented to " <<hist[i][j][bucket] << endl;
+			}
+		}
+	}
 }
 
 long stats::rectArea(pair<int,int> ul, pair<int,int> lr){
-  // given a rectangle, return the number of pixels in the rectangle
-  /* @param ul is (x,y) of the upper left corner of the rectangle
-  * @param lr is (x,y) of the lower right corner of the rectangle */
-/* your code here */
- int xval = lr.first - ul.first + 1;
- int yval = lr.second - lr.second + 1;
- int area = xval * yval;
-
- return area;
+	return (lr.second-ul.second+1) * (lr.first-ul.first+1);
 }
 
 HSLAPixel stats::getAvg(pair<int,int> ul, pair<int,int> lr){
-  /* Each color component of the pixel is the average value of that
-	* component over the rectangle.
-	* @param ul is (x,y) of the upper left corner of the rectangle
-	* @param lr is (x,y) of the lower right corner of the rectangle */
-    // The average hue value can be computed from the average X and
-    // Y values using the arctan function. You should research the
-    // details of this. Finally, please set the average alpha channel to
-    // 1.0.
-/* your code here */
-  int avgH  = 0;
-  double avgS = 0;
-  double avgL = 0;
-  long tPix= rectArea(ul,lr);
+	// compute sums
+	double totHuex, totHuey, totSat, totLum;
+	if (ul.first == 0 && ul.second == 0) {
+		totHuex = sumHueX[lr.first][lr.second];
+		totHuey = sumHueY[lr.first][lr.second];
+		totSat = sumSat[lr.first][lr.second];
+		totLum = sumLum[lr.first][lr.second];
+	}
+	else if (ul.second == 0) {
+		totHuex = sumHueX[lr.first][lr.second]-sumHueX[ul.first-1][lr.second];
+		totHuey = sumHueY[lr.first][lr.second] - sumHueY[ul.first - 1][lr.second];
+		totSat = sumSat[lr.first][lr.second] - sumSat[ul.first - 1][lr.second];
+		totLum = sumLum[lr.first][lr.second] - sumLum[ul.first - 1][lr.second];
+	}
+	else if (ul.first == 0) {
+		totHuex = sumHueX[lr.first][lr.second] - sumHueX[lr.first][ul.second-1];
+		totHuey = sumHueY[lr.first][lr.second] - sumHueY[lr.first][ul.second - 1];
+		totSat = sumSat[lr.first][lr.second] - sumSat[lr.first][ul.second - 1];
+		totLum = sumLum[lr.first][lr.second] - sumLum[lr.first][ul.second - 1];
+	}
+	else {
+		totHuex = sumHueX[lr.first][lr.second] - sumHueX[ul.first - 1][lr.second] - sumHueX[lr.first][ul.second - 1] + sumHueX[ul.first - 1][ul.second - 1];
+		totHuey = sumHueY[lr.first][lr.second] - sumHueY[ul.first - 1][lr.second] - sumHueY[lr.first][ul.second - 1] + sumHueY[ul.first - 1][ul.second - 1];
+		totSat = sumSat[lr.first][lr.second] - sumSat[ul.first - 1][lr.second] - sumSat[lr.first][ul.second - 1] + sumSat[ul.first - 1][ul.second - 1];
+		totLum = sumLum[lr.first][lr.second] - sumLum[ul.first - 1][lr.second] - sumLum[lr.first][ul.second - 1] + sumLum[ul.first - 1][ul.second - 1];
+	}
+	// compute average huex
+	
+	double avgHuex = totHuex / rectArea(ul, lr);
+	
+	// compute average huey
+	
+	double avgHuey = totHuey / rectArea(ul, lr);
 
-  if (ul.first == 0 && ul.second == 0){
-    avgH = sumHueX[lr.first][lr.second]/tPix;
-  } else if (ul.first == 0){
-    avgH = (sumHueX[lr.first][lr.second] - sumHueX[lr.first][ul.second-1])/tPix;
-    avgL = (sumLum[lr.first][lr.second] - sumLum[lr.first][ul.second-1])/tPix;
-    avgS = (sumSat[lr.first][lr.second] - sumLum[lr.first][ul.second-1])/tPix;
-  } else if (ul.second == 0){
-    avgH = (sumHueX[lr.first][lr.second] - sumHueX[ul.first-1][lr.second])/tPix;
-    avgL = (sumLum[lr.first][lr.second] - sumLum[ul.first-1][lr.second])/tPix;
-    avgS = (sumSat[lr.first][lr.second] - sumLum[ul.first-1][lr.second])/tPix;
-  }
-  avgH = (sumHueX[lr.first][lr.second] - sumHueX[lr.first][ul.second-1] - sumHueX[ul.first-1][lr.second] + sumHueX[ul.first-1][ul.second-1])/ tPix;
-  avgL = (sumLum[lr.first][lr.second] - sumLum[lr.first][ul.second-1] - sumLum[ul.first-1][lr.second] + sumLum[ul.first-1][ul.second-1])/tPix;
-  avgS = (sumSat[lr.first][lr.second] - sumLum[lr.first][ul.second-1] - sumLum[ul.first-1][lr.second] + sumLum[ul.first-1][ul.second-1])/tPix;
+	// compute average hue
+	double avgHue = atan2(avgHuey, avgHuex) * 180 / PI;
+	while (avgHue < 0) {
+		avgHue += 360;
+	}
+	
+	// compute average saturation
+	
+	double avgSat = totSat / rectArea(ul, lr);
 
-  return (HSLAPixel(avgH ,avgS, avgL, 1.0));
+	// compute average luminosity
+	
+	double avgLum = totLum / rectArea(ul, lr);
+
+	return HSLAPixel(avgHue, avgSat, avgLum, 1.0);
 }
+
 vector<int> stats::buildHist(pair<int,int> ul, pair<int,int> lr){
+	vector<int> storer, smaller, smallest, adder;
+	vector<int> bigger= hist[lr.first][lr.second];
+	smaller.assign(36, 0);
+	smallest.assign(36, 0);
+	adder.assign(36, 0);
+	if (ul.first == 0 && ul.second == 0) {
+	}
+	else if (ul.second == 0) {
+		smaller = hist[ul.first-1][lr.second];
+	}
+	else if (ul.first == 0) {
+		smaller = hist[lr.first][ul.second-1];
+	}
+	else {
+		smaller =hist[ul.first-1][lr.second];
+		smallest = hist[lr.first][ul.second - 1];
+		adder = hist[ul.first - 1][ul.second - 1];
+	}
 
-/* your code here */
-  vector<int> vectorhist(36);
-  for(int k = 0; k<36; k++){
-    if (ul.first == 0){
-      vectorhist[k] = hist[lr.first][lr.second][k] - hist[lr.first][ul.second-1][k];
-    }
-    if (ul.second == 0){
-      vectorhist[k] = hist[lr.first][lr.second][k] - hist[ul.first-1][lr.second][k];
-    }
-    vectorhist[k] = hist[lr.first][lr.second][k] - hist[lr.first][ul.second-1][k] - hist[ul.first-1][lr.second][k] + hist[ul.first-1][ul.second-1][k];
-  }
 
-  return vectorhist;
+	storer.resize(36);
+	
+	for (int i = 0; i < bigger.size(); i++) {
+		int holder = bigger[i] - smaller[i]-smallest[i]+adder[i];
+		while (holder < 0) {
+			holder += 360;
+		}
+		storer[i] = holder;
+	}
+
+	return storer;
 }
 
 // takes a distribution and returns entropy
 // partially implemented so as to avoid rounding issues.
 double stats::entropy(vector<int> & distn,int area){
 
-    double entropy = 0.;
+    double entropy = 0.0;
 
-/* your code here */
 
     for (int i = 0; i < 36; i++) {
-        if (distn[i] > 0 )
-            entropy += ((double) distn[i]/(double) area)
+        if (distn[i] > 0 ) 
+            entropy += ((double) distn[i]/(double) area) 
                                     * log2((double) distn[i]/(double) area);
     }
 
@@ -154,17 +269,13 @@ double stats::entropy(vector<int> & distn,int area){
 }
 
 double stats::entropy(pair<int,int> ul, pair<int,int> lr){
-  vector<int> newhist = buildHist(ul,lr);
-/* your code here */
-double entropy = 0.;
+	vector<int> values = buildHist(ul, lr);
+	/*
+	for (int i = 0; i < values.size(); i++) {
+		cout << values[i] << endl;
+	}
+	*/
+	int area = rectArea(ul, lr);
+	return stats::entropy(values, area);
 
-/* your code here */
-
-for (int i = 0; i < 36; i++) {
-    if (newhist[i] > 0 )
-        entropy += ((double) newhist[i]/(double) rectArea(ul,lr))
-                                * log2((double) newhist[i]/(double) rectArea(ul,lr));
-}
-
-return  -1 * entropy;
 }

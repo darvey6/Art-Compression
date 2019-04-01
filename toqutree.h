@@ -188,11 +188,13 @@ private:
    */
    Node * buildTree(PNG * im, int k);
 
-   void toqutree::setupImages(PNG* im, int k, PNG* ne, PNG* nw, PNG* se, PNG* sw, int splitx, int splity);
+   void setupImages(PNG* im, int k, PNG* ne, PNG* nw, PNG* se, PNG* sw, int splitx, int splity);
 
-   pair<int, int> getSplit(PNG* im, int k, stats s);
+   pair<int, int> getSplit(PNG* im, int k, stats & s);
 
-   double getAvgEnt(PNG* im, stats s, int k, int splitx, int splity);
+   double getAvgEnt(PNG* im, stats & s, int k, int splitx, int splity);
+   int sizeHelper(Node* root);
+   bool pruneHelper(Node* root, double upperBound, double lowerBound, double  tol);
    /* =================== end of private PA3 functions ============== */
 };
 

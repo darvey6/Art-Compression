@@ -446,7 +446,15 @@ bool pruneHelper(Node* root, double upperBound, double lowerBound, double  tol){
 /* called by destructor and assignment operator*/
 void toqutree::clear(Node * & curr){
 /* your code here */
-
+	if (curr == NULL){
+		return;
+	}
+	clear(curr->NE);
+	clear(curr->NW);
+	clear(curr->SE);
+	clear(curr->SW);
+	delete curr;
+	curr = NULL;
 }
 
 /* done */

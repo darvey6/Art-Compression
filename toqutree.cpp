@@ -405,38 +405,52 @@ PNG toqutree::render(){
 
 /* oops, i left the implementation of this one in the file! */
 void toqutree::prune(double tol){
+	double current_upperbound = root.avg.h * (M_PI/180) + tol;
+	double currnet_lowerbound = root.avg.h * (M_PI/180) - tol;
+	if (pruneHelper(root->NE, current_upperbound, current_lowerbound, tol) &&  pruneHelper(root->NW, current_upperbound, current_lowerbound, tol) && pruneHelper(root->SE, current_upperbound, current_lowerbound, tol) && pruneHelper(root->SW, current_upperbound, current_lowerbound, tol)){
+		clear(&root);
+	}
 
 }
 
+bool pruneHelper(Node* root, double upperBound, double lowerBound, double  tol){
+	if (root == NULL){
+		return true;
+	}
+
+	//checking if leaf node is within the tol bound
+	if (root->NE == NULL && root->NW == NULL && root->SE == NULL && root->NW == NULL){
+		return root.avg.h * (M_PI/180)< upperBound && root.avg.h * (M_PI/180)>lowerBound;
+	}
+
+	// comparing parent's tol bound to the current node tol bound, then picking the tighter bound
+	// used for child of the current node;
+	double current_upperbound = root.avg.h * (M_PI/180) + tol;
+	double currnet_lowerbound = root.avg.h * (M_PI/180) - tol;
+	if (upperBound < current_upperbound){
+		current_upperbound = upperBound;
+	}
+	if (lowerBound > current_lowerbound){
+		current_lowerbound = lowerBound;
+	}
+
+	// checking if each subtree's leaf node are within the tolerance bound, if yes then returns true, ow returns false
+	if (pruneHelper(root->NE, current_upperbound, current_lowerbound, tol) &&  pruneHelper(root->NW, current_upperbound, current_lowerbound, tol) && pruneHelper(root->SE, current_upperbound, current_lowerbound, tol) && pruneHelper(root->SW, current_upperbound, current_lowerbound, tol)){
+		clear(&root);
+		return true;
+	}
+	return false;
+}
 
 
 /* called by destructor and assignment operator*/
 void toqutree::clear(Node * & curr){
 /* your code here */
-	if (curr == NULL){
-		return;
-	}
-	clear(curr->NE);
-	clear(curr->NW);
-	clear(curr->SE);
-	clear(curr->SW);
-	delete curr;
-	curr = NULL;
+
 }
 
 /* done */
 /* called by assignment operator and copy constructor */
 toqutree::Node * toqutree::copy(const Node * other) {
-	if(other == NULL){
-		return NULL;
-	}
-/* your code here */
- Node newNode = Node(other.center, other.dimension, other.avg);
 
-newNode->NE = copy(other->NE);
-newNode->NW = copy(other->NW);
-newNode->SE = copy(other->SW);
-newNode->SE = copy(other->SE);
-
-return newNode;
 }

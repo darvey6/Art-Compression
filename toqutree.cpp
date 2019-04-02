@@ -30,23 +30,24 @@ toqutree & toqutree::operator=(const toqutree & rhs){
 	return *this;
 }
 
-toqutree::toqutree(PNG & imIn, int k){ 
-	
+toqutree::toqutree(PNG & imIn, int k){
+
 	PNG * n = new PNG(pow(2,k), pow(2, k));
+	int centerX = (imIn.width() / 2) - pow(2, k - 1);
+	int centerY = (imIn.height() / 2) - pow(2, k - 1);
 	for (int i = 0; i < pow(2, k); i++) {
 		for (int j = 0; j < pow(2, k); j++) {
-			*n->getPixel(i, j) = *imIn.getPixel(i, j);
-			*n->getPixel(i, j) = *imIn.getPixel(i, j);
+			*n->getPixel(i, j) = *imIn.getPixel(i+centerX, j+centerY);
 		}
 	}
 
 	root = buildTree(n, k);
-	
 
-/* This constructor grabs the 2^k x 2^k sub-image centered */   
-/* in imIn and uses it to build a quadtree. It may assume  */   
+
+/* This constructor grabs the 2^k x 2^k sub-image centered */
+/* in imIn and uses it to build a quadtree. It may assume  */
 /* that imIn is large enough to contain an image of that size. */
-                                                                
+
 }
 
 int toqutree::size() {
@@ -64,7 +65,7 @@ int toqutree::sizeHelper(Node* root) {
 
 
 toqutree::Node * toqutree::buildTree(PNG * im, int k) {
-	
+
 	if (k >= 0) {
 		Node* n;
 		stats* s = new stats(*im);
@@ -115,10 +116,10 @@ toqutree::Node * toqutree::buildTree(PNG * im, int k) {
 			delete(im);
 			im = NULL;
 
-			n->NE = buildTree(ne, 0);
-			n->NW = buildTree(nw, 0);
-			n->SE = buildTree(se, 0);
-			n->SW = buildTree(sw, 0);
+			n->NE = buildTree(ne, k-1);
+			n->NW = buildTree(nw, k-1);
+			n->SE = buildTree(se, k-1);
+			n->SW = buildTree(sw, k-1);
 		}
 
 		delete(s);
@@ -126,15 +127,11 @@ toqutree::Node * toqutree::buildTree(PNG * im, int k) {
 
 		return n;
 	}
-	
-
-	
-
 
 // Note that you will want to practice careful memory use
 // In this function. We pass the dynamically allocated image
 // via pointer so that it may be released after it is used .
-// similarly, at each level of the tree you will want to 
+// similarly, at each level of the tree you will want to
 // declare a dynamically allocated stats object, and free it
 // once you've used it to choose a split point, and calculate
 // an average.
@@ -158,12 +155,12 @@ void toqutree::setupImages(PNG* im, int k,  PNG* ne, PNG* nw, PNG* se, PNG* sw, 
 }
 
 pair<int,int> toqutree::getSplit(PNG* im, int k, stats & s) {
-	
+
 	double minAvgEnt = 0;
 	int xcord = 0;
 	int ycord = 0;
 	int toprow = (pow(2, k) - pow(2, k - 1)) / 2;
-	int botrow = pow(2, k) - 1 - toprow;
+	int botrow = toprow + pow(2, k - 1) - 1;
 	for (int i = toprow; i <= botrow; i++) {
 		for (int j = toprow; j <= botrow; j++) {
 			if (i == toprow && j == toprow) {
@@ -175,7 +172,7 @@ pair<int,int> toqutree::getSplit(PNG* im, int k, stats & s) {
 				xcord = i;
 				ycord = j;
 				minAvgEnt = getAvgEnt(im, s, k, i, j);
-				
+
 			}
 		}
 	}
@@ -183,7 +180,7 @@ pair<int,int> toqutree::getSplit(PNG* im, int k, stats & s) {
 	pair<int, int> r(xcord, ycord);
 
 	return r;
-	
+
 }
 
 double toqutree::getAvgEnt(PNG* im, stats & s, int k, int splitx, int splity) {
@@ -201,7 +198,7 @@ double toqutree::getAvgEnt(PNG* im, stats & s, int k, int splitx, int splity) {
 		pair<int, int> swUl(0, splity);
 		pair<int, int> swLr(splitx-1, corner);
 		double swtot = s.entropy(swUl, swLr);
-		
+
 		pair<int, int> neUl(splitx, 0);
 		pair<int, int> neLr(corner, splity-1);
 		double netot = s.entropy(neUl, neLr);
@@ -277,7 +274,7 @@ double toqutree::getAvgEnt(PNG* im, stats & s, int k, int splitx, int splity) {
 		pair<int, int> TstartLr(startX + increment - 1, splity - 1);
 		double TstartTot = s.entropy(TstartUl, TstartLr);
 
-		// Bottom Solid Square 
+		// Bottom Solid Square
 		pair<int, int> BstartUl(startX, splity);
 		pair<int, int> BstartLr(startX + increment - 1, corner);
 		double BstartTot = s.entropy(BstartUl, BstartLr);
@@ -382,7 +379,7 @@ double toqutree::getAvgEnt(PNG* im, stats & s, int k, int splitx, int splity) {
 
 		double HeavySplitTot = s.entropy(UprightCornHist, area);
 
-		
+
 		total = Solidtot + VertSplitTot + HorizSplitTot + HeavySplitTot;
 
 	}
@@ -392,11 +389,42 @@ double toqutree::getAvgEnt(PNG* im, stats & s, int k, int splitx, int splity) {
 PNG toqutree::render(){
 
 // My algorithm for this problem included a helper function
-// that was analogous to Find in a BST, but it navigated the 
+// that was analogous to Find in a BST, but it navigated the
 // quadtree, instead.
 
-/* your code here */
+	return helpRender(root);
 
+}
+
+PNG toqutree::helpRender(Node* root) {
+	if (root->NE==NULL && root->NW==NULL && root->SE==NULL && root->SW==NULL) {
+		PNG hold = PNG(pow(2, root->dimension), pow(2, root->dimension));
+		for (int i = 0; i < pow(2, root->dimension); i++) {
+			for (int j = 0; j < pow(2, root->dimension); j++) {
+				*hold.getPixel(i, j) = root->avg;
+			}
+		}
+		return hold;
+	}
+	else {
+		PNG ne = helpRender(root->NE);
+		PNG nw = helpRender(root->NW);
+		PNG se = helpRender(root->SE);
+		PNG sw = helpRender(root->SW);
+
+		PNG hold = PNG(pow(2, root->dimension), pow(2, root->dimension));
+
+		for (int i = 0; i < pow(2, root->dimension-1); i++) {
+			for (int j = 0; j < pow(2, root->dimension-1); j++) {
+				*hold.getPixel(i, j) = *nw.getPixel(i, j);
+				*hold.getPixel(i + pow(2, root->dimension - 1),j) = *ne.getPixel(i, j);
+				*hold.getPixel(i, j + pow(2, root->dimension - 1)) = *sw.getPixel(i, j);
+				*hold.getPixel(i + pow(2, root->dimension - 1), j + pow(2, root->dimension - 1)) = *se.getPixel(i, j);
+			}
+		}
+		return hold;
+
+	}
 }
 
 /* oops, i left the implementation of this one in the file! */
@@ -405,7 +433,10 @@ void toqutree::prune(double tol){
 	//prune(root,tol);
 	double current_upperbound = root->avg.h * (M_PI / 180) + tol;
 	double current_lowerbound = root->avg.h * (M_PI / 180) - tol;
-	if (pruneHelper(root->NE, current_upperbound, current_lowerbound, tol) && pruneHelper(root->NW, current_upperbound, current_lowerbound, tol) && pruneHelper(root->SE, current_upperbound, current_lowerbound, tol) && pruneHelper(root->SW, current_upperbound, current_lowerbound, tol)) {
+	if (pruneHelper(root->NE, current_upperbound, current_lowerbound, tol)
+		&& pruneHelper(root->NW, current_upperbound, current_lowerbound, tol)
+		&& pruneHelper(root->SE, current_upperbound, current_lowerbound, tol)
+		&& pruneHelper(root->SW, current_upperbound, current_lowerbound, tol)) {
 		clear(root);
 	}
 
@@ -417,7 +448,7 @@ bool toqutree::pruneHelper(Node* root, double upperBound, double lowerBound, dou
 	}
 
 	//checking if leaf node is within the tol bound
-	if (root->NE == NULL && root->NW == NULL && root->SE == NULL && root->NW == NULL) {
+	if (root->NE == NULL && root->NW == NULL && root->SE == NULL && root->SW == NULL) {
 		return root->avg.h * (M_PI / 180) < upperBound && root->avg.h * (M_PI / 180) > lowerBound;
 	}
 
@@ -465,10 +496,8 @@ toqutree::Node * toqutree::copy(const Node * other) {
 
 	newNode->NE = copy(other->NE);
 	newNode->NW = copy(other->NW);
-	newNode->SE = copy(other->SW);
+	newNode->SW = copy(other->SW);
 	newNode->SE = copy(other->SE);
 
 	return newNode;
 }
-
-

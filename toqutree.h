@@ -132,6 +132,8 @@ public:
     */
    PNG render();
 
+   PNG helpRender(Node* root);
+
    /*
     *  Prune function trims subtrees as high as possible in the tree.
     *  A subtree is pruned (cleared) if ALL of the subtree's leaves are within 

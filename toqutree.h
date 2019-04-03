@@ -196,7 +196,9 @@ private:
 
    double getAvgEnt(PNG* im, stats & s, int k, int splitx, int splity);
    int sizeHelper(Node* root);
-   bool pruneHelper(Node* root, double upperBound, double lowerBound, double  tol);
+   void pruneHelper(Node* root, double  tol);
+   Node * copyhelper(const Node* other);
+   bool with_tolerance(Node* root, double tol);
    /* =================== end of private PA3 functions ============== */
 };
 
